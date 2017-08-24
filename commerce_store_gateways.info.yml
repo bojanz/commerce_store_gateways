@@ -1,0 +1,9 @@
+name: Store Gateways
+type: module
+description: 'Allows each store to have its own payment gateway configuration.'
+package: Commerce (contrib)
+core: 8.x
+dependencies:
+  - commerce
+  - commerce:commerce_payment
+  - commerce:commerce_store

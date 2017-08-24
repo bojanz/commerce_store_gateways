@@ -1,0 +1,11 @@
+commerce_store_gateways.manage:
+  path: '/store/{commerce_store}/payment_gateways'
+  defaults:
+    _form: '\Drupal\commerce_store_gateways\Form\ManageForm'
+    _title: 'Payment gateways'
+  options:
+    parameters:
+      commerce_store:
+        type: 'entity:commerce_store'
+  requirements:
+    _entity_access: 'commerce_store.edit'

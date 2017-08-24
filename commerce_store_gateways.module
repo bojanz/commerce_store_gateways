@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * @file
+ * Allows each store to have its own payment gateway configuration.
+ */
+
+use Drupal\commerce\BundleFieldDefinition;
+use Drupal\commerce_store\Entity\Store;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for 'commerce_store_type_form'.
+ */
+function commerce_store_gateways_form_commerce_store_type_form_alter(array &$form, FormStateInterface $form_state) {
+  /** @var \Drupal\commerce_store\Entity\StoreTypeInterface $store_type */
+  $store_type = $form_state->getFormObject()->getEntity();
+  $default_value = FALSE;
+  if (!$store_type->isNew()) {
+    $store = Store::create(['type' => $store_type->id()]);
+    $default_value = $store->hasField('payment_gateways');
+  }
+
+  $form['enable_store_gateways'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Allow each store to have its own payment gateway configuration'),
+    '#default_value' => $default_value,
+  ];
+  $form['actions']['submit']['#submit'][] = 'commerce_store_gateways_commerce_store_type_form_submit';
+}
+
+/**
+ * Submit handler for the commerce_store_type form.
+ */
+function commerce_store_gateways_commerce_store_type_form_submit(array $form, FormStateInterface $form_state) {
+  /** @var \Drupal\commerce_store\Entity\StoreTypeInterface $store_type */
+  $store_type = $form_state->getFormObject()->getEntity();
+  $values = $form_state->getValues();
+  // Stop here if the value of the checkbox hasn't changed.
+  if ($form['enable_store_gateways']['#default_value'] == $values['enable_store_gateways']) {
+    return;
+  }
+
+  $field_definition = commerce_store_gateways_get_field_definition($store_type->id());
+  /** @var \Drupal\commerce\ConfigurableFieldManagerInterface $configurable_field_manager */
+  $configurable_field_manager = \Drupal::service('commerce.configurable_field_manager');
+  if ($values['enable_store_gateways']) {
+    $configurable_field_manager->createField($field_definition);
+  }
+  else {
+    $configurable_field_manager->deleteField($field_definition);
+  }
+}
+
+/**
+ * Gets the field definition for the payment_gateways store field.
+ *
+ * @return \Drupal\commerce|BundleFieldDefinition
+ *   The field definition.
+ */
+function commerce_store_gateways_get_field_definition($store_type_id) {
+  $field_definition = BundleFieldDefinition::create('commerce_config_override')
+    ->setTargetEntityTypeId('commerce_store')
+    ->setTargetBundle($store_type_id)
+    ->setName('payment_gateways')
+    ->setLabel('Payment gateways')
+    ->setCardinality(BundleFieldDefinition::CARDINALITY_UNLIMITED);
+
+  return $field_definition;
+}

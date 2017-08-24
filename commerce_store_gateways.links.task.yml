@@ -1,0 +1,4 @@
+commerce_store_gateways.manage:
+  route_name: commerce_store_gateways.manage
+  base_route: entity.commerce_store.edit_form
+  title: Payment gateways
