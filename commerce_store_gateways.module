@@ -7,6 +7,7 @@
 
 use Drupal\commerce\BundleFieldDefinition;
 use Drupal\commerce_store\Entity\Store;
+use Drupal\Core\Database\Query\AlterableInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
@@ -97,5 +98,25 @@ function commerce_store_gateways_entity_presave(EntityInterface $entity) {
     /** @var \Drupal\commerce_store\Entity\StoreInterface $store */
     $store = Drupal::service('commerce_store.current_store')->getStore();
     $entity->store_id = $store;
+  }
+}
+
+/**
+ * Implements hook_query_TAG_alter().
+ * TAG = entity_query_commerce_payment_method.
+ */
+function commerce_store_gateways_query_entity_query_commerce_payment_method_alter(AlterableInterface $query) {
+  /** @var \Drupal\commerce_store\Entity\StoreInterface $store */
+  $store = Drupal::service('commerce_store.current_store')->getStore();
+  if ($store && $query instanceof \Drupal\Core\Database\Query\SelectInterface) {
+    // Make sure that that only payment methods appropriate for the current
+    // store are shown. This is a workaround to filter the a user's list of
+    // existing payment methods.
+    // TODO: This is too generic. Find a better way to make PaymentMethodStorage::loadReusable only load payment methods appropriate for that store.
+    $query->condition(
+      $query->orConditionGroup()
+        ->condition('{commerce_payment_method}.store_id', NULL, 'is')
+        ->condition('{commerce_payment_method}.store_id', $store->id())
+    );
   }
 }
