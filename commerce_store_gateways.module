@@ -7,6 +7,8 @@
 
 use Drupal\commerce\BundleFieldDefinition;
 use Drupal\commerce_store\Entity\Store;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
@@ -67,4 +69,21 @@ function commerce_store_gateways_get_field_definition($store_type_id) {
     ->setCardinality(BundleFieldDefinition::CARDINALITY_UNLIMITED);
 
   return $field_definition;
+}
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function commerce_store_gateways_entity_base_field_info(EntityTypeInterface $entity_type) {
+  $fields = [];
+  if ($entity_type->id() === 'commerce_payment_method') {
+    $fields['store_id'] = BaseFieldDefinition::create('entity_reference')
+      ->setLabel(t('Store'))
+      ->setDescription(t('The store with which this payment method can be used.'))
+      ->setCardinality(1)
+      ->setSetting('target_type', 'commerce_store')
+      ->setSetting('handler', 'default')
+      ->setDisplayConfigurable('view', TRUE);
+  }
+  return $fields;
 }
