@@ -7,6 +7,7 @@
 
 use Drupal\commerce\BundleFieldDefinition;
 use Drupal\commerce_store\Entity\Store;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Form\FormStateInterface;
@@ -86,4 +87,15 @@ function commerce_store_gateways_entity_base_field_info(EntityTypeInterface $ent
       ->setDisplayConfigurable('view', TRUE);
   }
   return $fields;
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function commerce_store_gateways_entity_presave(EntityInterface $entity) {
+  if ($entity->getEntityTypeId() === 'commerce_payment_method' && $entity->isNew()) {
+    /** @var \Drupal\commerce_store\Entity\StoreInterface $store */
+    $store = Drupal::service('commerce_store.current_store')->getStore();
+    $entity->store_id = $store;
+  }
 }
